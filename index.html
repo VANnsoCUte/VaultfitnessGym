@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gym Front Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Vault Fitness Gym</h1>
+    <button class="primary" id="scanBtn" style="width:auto;margin:0;padding:8px 20px">Scan QR code</button>
+    <div class="clock"><b id="clockTime"></b><span id="clockDate"></span><br><span id="cloudStatus">Local only</span> <button id="cloudBtn" style="min-height:30px;padding:3px 10px">Sign in</button></div>
+  </header>
+
+  <section class="stats" aria-label="Summary">
+    <div class="stat ok"><b id="sActive">0</b><span>Active members</span></div>
+    <div class="stat warn"><b id="sExpiring">0</b><span>Expiring within 3 days</span></div>
+    <div class="stat bad"><b id="sExpired">0</b><span>Expired</span></div>
+    <div class="stat in"><b id="sInside">0</b><span>Inside the gym now</span></div>
+  </section>
+
+  <div class="layout">
+    <aside class="panel">
+      <h2>Add client</h2>
+      <label for="fName">Full name</label>
+      <input id="fName" autocomplete="off" placeholder="e.g. Maria Santos">
+      <label for="fPhone">Phone (optional)</label>
+      <input id="fPhone" inputmode="tel" autocomplete="off" placeholder="e.g. 0917 123 4567">
+      <label>Photo (to identify the client)</label>
+      <div class="photoField"><div class="avatar big" id="fPrev">?</div><div><button type="button" id="fCamBtn">Use webcam</button> <button type="button" id="fPhotoBtn">Upload photo</button><input type="file" id="fPhotoFile" accept="image/*" hidden></div></div>
+      <label for="fPlan">Subscription</label>
+      <select id="fPlan">
+        <option value="daily">Daily pass (walk-in, 1 day)</option>
+        <option value="half">Half month (15 days)</option>
+        <option value="monthly" selected>Monthly</option>
+        <option value="quarterly">Quarterly (3 months)</option>
+        <option value="yearly">Yearly</option>
+      </select>
+      <label for="fStart">Start date</label>
+      <input id="fStart" type="date">
+      <div class="hint" id="fHint"></div>
+      <button class="primary" id="addBtn">Save client</button>
+      <button id="walkBtn" style="width:100%;margin-top:8px;min-height:42px">Daily walk-in: save and time in now</button>
+    </aside>
+
+    <main class="panel">
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Search by name or phone" aria-label="Search clients">
+        <div class="view">
+          <button id="vMembers" aria-pressed="true">Clients</button>
+          <button id="vWalk" aria-pressed="false">Walk-in log</button><button id="vLog" aria-pressed="false">Time log</button>
+        </div>
+      </div>
+      <div id="tabs" class="tabs" role="group" aria-label="Filter clients"></div>
+      <div id="list"></div>
+    </main>
+  </div>
+</div>
+
+<dialog id="renewDlg">
+  <h2 style="margin:0 0 4px;font:700 21px/1.1 'Barlow Condensed','Arial Narrow',sans-serif" id="renewTitle">Renew subscription</h2>
+  <label for="renewPlan">New subscription</label>
+  <select id="renewPlan">
+    <option value="daily">Daily pass (1 day)</option>
+    <option value="half">Half month (15 days)</option>
+    <option value="monthly">Monthly</option>
+    <option value="quarterly">Quarterly (3 months)</option>
+    <option value="yearly">Yearly</option>
+  </select>
+  <div class="hint" id="renewHint"></div>
+  <div class="dlgacts"><button id="renewCancel">Cancel</button><button class="primary" style="width:auto;margin:0" id="renewOk">Renew</button></div>
+</dialog>
+<dialog id="photoDlg">
+  <h2 style="margin:0;font:700 21px/1.1 'Barlow Condensed','Arial Narrow',sans-serif" id="photoName"></h2>
+  <div id="photoBody"></div>
+  <div class="dlgacts" style="flex-wrap:wrap"><button class="danger" id="photoRemove">Remove photo</button><button id="photoCam">Use webcam</button><button id="photoChange">Change photo</button><button id="photoClose">Close</button></div>
+  <input type="file" id="photoFile" accept="image/*" hidden>
+</dialog>
+<dialog id="camDlg">
+  <h2 style="margin:0 0 10px;font:700 21px/1.1 'Barlow Condensed','Arial Narrow',sans-serif">Take photo</h2>
+  <video id="camVideo" autoplay playsinline muted style="width:100%;border-radius:10px;background:#000;aspect-ratio:1;object-fit:cover;display:block"></video>
+  <div class="hint">Center the client’s face in the frame, then capture.</div>
+  <div class="dlgacts"><button id="camCancel">Cancel</button><button class="primary" style="width:auto;margin:0" id="camShot">Capture</button></div>
+</dialog>
+<dialog id="scanDlg" style="width:min(420px,94vw)">
+  <h2 style="margin:0 0 10px;font:700 21px/1.1 'Barlow Condensed','Arial Narrow',sans-serif">Scan client QR code</h2>
+  <video id="scanVideo" autoplay playsinline muted style="width:100%;border-radius:10px;background:#000;aspect-ratio:4/3;object-fit:cover;display:block"></video>
+  <div class="hint" id="scanMsg">Starting camera…</div>
+  <label for="scanInput">Handheld scanner or typed code</label>
+  <input id="scanInput" autocomplete="off" placeholder="Scan or type the code, then press Enter">
+  <div id="scanResult" aria-live="polite"></div>
+  <div class="dlgacts"><button id="scanClose">Close scanner</button></div>
+</dialog>
+<dialog id="qrDlg">
+  <h2 id="qrName" style="margin:0 0 10px;font:700 21px/1.1 'Barlow Condensed','Arial Narrow',sans-serif"></h2>
+  <div id="qrBody" style="text-align:center"></div>
+  <div class="dlgacts"><button id="qrClose">Close</button></div>
+</dialog>
+<dialog id="loginDlg">
+  <h2 style="margin:0 0 6px;font:700 21px/1.1 'Barlow Condensed','Arial Narrow',sans-serif">Staff sign in</h2>
+  <label for="loginEmail">Email</label>
+  <input id="loginEmail" type="email" autocomplete="username">
+  <label for="loginPass">Password</label>
+  <input id="loginPass" type="password" autocomplete="current-password">
+  <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:8px"><input type="checkbox" id="showPass" style="width:auto;min-height:0"> Show password</label>
+  <div class="hint" id="loginMsg"></div>
+  <div class="dlgacts"><button class="primary" style="width:auto;margin:0" id="loginBtn">Sign in</button></div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+<script type="module" src="cloud.js"></script>
+</body>
+</html>
